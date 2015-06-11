@@ -25,8 +25,8 @@
 //#include <iostream>
 #include "inet/routing/extras/dsr/dsr-uu-omnetpp.h"
 
-#include "inet/networklayer/common/IPSocket.h"
 #include "inet/networklayer/contract/ipv4/IPv4Address.h"
+#include "inet/common/IProtocolRegistrationListener.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/networklayer/ipv4/ICMPMessage_m.h"
@@ -324,9 +324,7 @@ void DSRUU::initialize(int stage)
     }
     else if (stage == INITSTAGE_ROUTING_PROTOCOLS)
     {
-        IPSocket ipSocket(gate("to_ip"));
-        ipSocket.registerProtocol(IP_PROT_MANET);
-        ipSocket.registerProtocol(IP_PROT_DSR);
+        registerProtocol(Protocol::dsr, gate("to_ip"));
 
         /* Search the 80211 interface */
         inet_rt = getModuleFromPar<IIPv4RoutingTable>(par("routingTableModule"), this);
