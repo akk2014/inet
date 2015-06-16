@@ -110,6 +110,7 @@ void TCP_lwIP::initialize(int stage)
         if (!isOperational)
             throw cRuntimeError("This module doesn't support starting in node DOWN state");
         registerProtocol(Protocol::tcp, gate("ipOut"));
+        registerProtocol(Protocol::tcp, gate("appOut"));
     }
     else if (stage == INITSTAGE_LAST) {
         isAliveM = true;
@@ -132,12 +133,6 @@ TCP_lwIP::~TCP_lwIP()
 
     if (pLwipTcpLayerM)
         delete pLwipTcpLayerM;
-}
-
-// send a TCP_I_ESTABLISHED msg to Application Layer
-void TCP_lwIP::sendEstablishedMsg(TcpLwipConnection& connP)
-{
-    connP.sendEstablishedMsg();
 }
 
 void TCP_lwIP::handleIpInputMessage(TCPSegment *tcpsegP)
@@ -338,7 +333,7 @@ err_t TCP_lwIP::tcp_event_recv(TcpLwipConnection& conn, struct pbuf *p, err_t er
         tcpConnectInfo->setRemotePort(conn.pcbM->remote_port);
         dataMsg->setControlInfo(tcpConnectInfo);
         // send Msg to Application layer:
-        send(dataMsg, "appOut", conn.appGateIndexM);
+        send(dataMsg, "appOut");
     }
 
     conn.do_SEND();
@@ -406,7 +401,7 @@ void TCP_lwIP::handleAppMessage(cMessage *msgP)
         TCPDataTransferMode dataTransferMode = (TCPDataTransferMode)(openCmd->getDataTransferMode());
 
         // add into appConnMap
-        conn = new TcpLwipConnection(*this, connId, msgP->getArrivalGate()->getIndex(), dataTransferMode);
+        conn = new TcpLwipConnection(*this, connId, dataTransferMode);
         tcpAppConnMapM[connId] = conn;
 
         EV_INFO << this << ": TCP connection created for " << msgP << "\n";
@@ -587,7 +582,7 @@ void TCP_lwIP::finish()
 
 void TCP_lwIP::printConnBrief(TcpLwipConnection& connP)
 {
-    EV_TRACE << this << ": connId=" << connP.connIdM << " appGateIndex=" << connP.appGateIndexM;
+    EV_TRACE << this << ": connId=" << connP.connIdM;
 }
 
 void TCP_lwIP::ip_output(LwipTcpLayer::tcp_pcb *pcb, L3Address const& srcP,
@@ -762,7 +757,7 @@ void TCP_lwIP::process_STATUS(TcpLwipConnection& connP, TCPCommand *tcpCommandP,
     connP.fillStatusInfo(*statusInfo);
     msgP->setControlInfo(statusInfo);
     msgP->setKind(TCP_I_STATUS);
-    send(msgP, "appOut", connP.appGateIndexM);
+    send(msgP, "appOut");
 }
 
 TcpLwipSendQueue *TCP_lwIP::createSendQueue(TCPDataTransferMode transferModeP)

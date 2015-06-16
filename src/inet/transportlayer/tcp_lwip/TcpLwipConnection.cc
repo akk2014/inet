@@ -67,11 +67,9 @@ void TcpLwipConnection::Stats::recordReceive(const TCPSegment& tcpsegP)
         rcvAckVector.record(tcpsegP.getAckNo());
 }
 
-TcpLwipConnection::TcpLwipConnection(TCP_lwIP& tcpLwipP, int connIdP, int gateIndexP,
-        TCPDataTransferMode dataTransferModeP)
+TcpLwipConnection::TcpLwipConnection(TCP_lwIP& tcpLwipP, int connIdP, TCPDataTransferMode dataTransferModeP)
     :
     connIdM(connIdP),
-    appGateIndexM(gateIndexP),
     pcbM(nullptr),
     sendQueueM(tcpLwipP.createSendQueue(dataTransferModeP)),
     receiveQueueM(tcpLwipP.createReceiveQueue(dataTransferModeP)),
@@ -93,11 +91,9 @@ TcpLwipConnection::TcpLwipConnection(TCP_lwIP& tcpLwipP, int connIdP, int gateIn
         statsM = new Stats();
 }
 
-TcpLwipConnection::TcpLwipConnection(TcpLwipConnection& connP, int connIdP,
-        LwipTcpLayer::tcp_pcb *pcbP)
+TcpLwipConnection::TcpLwipConnection(TcpLwipConnection& connP, int connIdP, LwipTcpLayer::tcp_pcb *pcbP)
     :
     connIdM(connIdP),
-    appGateIndexM(connP.appGateIndexM),
     pcbM(pcbP),
     sendQueueM(check_and_cast<TcpLwipSendQueue *>(inet::utils::createOne(connP.sendQueueM->getClassName()))),
     receiveQueueM(check_and_cast<TcpLwipReceiveQueue *>(inet::utils::createOne(connP.receiveQueueM->getClassName()))),
@@ -128,6 +124,26 @@ TcpLwipConnection::~TcpLwipConnection()
     delete statsM;
 }
 
+void TcpLwipConnection::sendAvailableIndicationToApp(int listenConnId)
+{
+    EV_INFO << "Notifying app: " << indicationName(TCP_I_AVAILABLE) << "\n";
+    cMessage *msg = new cMessage(indicationName(TCP_I_AVAILABLE));
+    msg->setKind(TCP_I_AVAILABLE);
+
+    L3Address localAddr(pcbM->local_ip.addr), remoteAddr(pcbM->remote_ip.addr);
+
+    TCPAvailableInfo *ind = new TCPAvailableInfo();
+    ind->setSocketId(listenConnId);
+    ind->setNewSocketId(connIdM);
+    ind->setLocalAddr(localAddr);
+    ind->setRemoteAddr(remoteAddr);
+    ind->setLocalPort(pcbM->local_port);
+    ind->setRemotePort(pcbM->remote_port);
+
+    msg->setControlInfo(ind);
+    tcpLwipM.send(msg, "appOut");
+}
+
 void TcpLwipConnection::sendEstablishedMsg()
 {
     cMessage *msg = new cMessage("TCP_I_ESTABLISHED");
@@ -145,7 +161,7 @@ void TcpLwipConnection::sendEstablishedMsg()
 
     msg->setControlInfo(tcpConnectInfo);
 
-    tcpLwipM.send(msg, "appOut", appGateIndexM);
+    tcpLwipM.send(msg, "appOut");
 }
 
 const char *TcpLwipConnection::indicationName(int code)
@@ -157,6 +173,7 @@ const char *TcpLwipConnection::indicationName(int code)
     switch (code) {
         CASE(TCP_I_DATA);
         CASE(TCP_I_URGENT_DATA);
+        CASE(TCP_I_AVAILABLE);
         CASE(TCP_I_ESTABLISHED);
         CASE(TCP_I_PEER_CLOSED);
         CASE(TCP_I_CLOSED);
@@ -179,7 +196,7 @@ void TcpLwipConnection::sendIndicationToApp(int code)
     TCPCommand *ind = new TCPCommand();
     ind->setSocketId(connIdM);
     msg->setControlInfo(ind);
-    tcpLwipM.send(msg, "appOut", appGateIndexM);
+    tcpLwipM.send(msg, "appOut");
 }
 
 void TcpLwipConnection::fillStatusInfo(TCPStatusInfo& statusInfo)
