@@ -142,6 +142,7 @@ void TcpLwipConnection::sendAvailableIndicationToApp(int listenConnId)
 
     msg->setControlInfo(ind);
     tcpLwipM.send(msg, "appOut");
+    //TODO shouldn't read from lwip until accept arrived
 }
 
 void TcpLwipConnection::sendEstablishedMsg()
@@ -162,6 +163,10 @@ void TcpLwipConnection::sendEstablishedMsg()
     msg->setControlInfo(tcpConnectInfo);
 
     tcpLwipM.send(msg, "appOut");
+    sendUpEnabled = true;
+    do_SEND();
+    //TODO now can read from lwip
+    sendUpData();
 }
 
 const char *TcpLwipConnection::indicationName(int code)
@@ -267,6 +272,14 @@ void TcpLwipConnection::abort()
     onCloseM = false;
 }
 
+void TcpLwipConnection::accept()
+{
+    if (sendUpEnabled)
+        throw cRuntimeError("socket already accepted/not a fork of a listening socket");
+    sendEstablishedMsg();
+    do_SEND();
+}
+
 void TcpLwipConnection::send(cPacket *msgP)
 {
     sendQueueM->enqueueAppData(msgP);
@@ -327,6 +340,8 @@ int TcpLwipConnection::send_data(void *data, int datalen)
 
 void TcpLwipConnection::do_SEND()
 {
+    if (!sendUpEnabled)
+        return;
     char buffer[8 * 536];
     int bytes;
     int allsent = 0;
@@ -356,6 +371,29 @@ void TcpLwipConnection::do_SEND()
     if (onCloseM && (0 == sendQueueM->getBytesAvailable())) {
         tcpLwipM.getLwipTcpLayer()->tcp_close(pcbM);
         onCloseM = false;
+    }
+}
+
+void TcpLwipConnection::sendUpData()
+{
+    if (sendUpEnabled) {
+        while (cPacket *dataMsg = receiveQueueM->extractBytesUpTo()) {
+            TCPConnectInfo *tcpConnectInfo = new TCPConnectInfo();
+            tcpConnectInfo->setSocketId(connIdM);
+            tcpConnectInfo->setLocalAddr(pcbM->local_ip.addr);
+            tcpConnectInfo->setRemoteAddr(pcbM->remote_ip.addr);
+            tcpConnectInfo->setLocalPort(pcbM->local_port);
+            tcpConnectInfo->setRemotePort(pcbM->remote_port);
+            dataMsg->setControlInfo(tcpConnectInfo);
+            int64_t len = dataMsg->getByteLength();
+            // send Msg to Application layer:
+            tcpLwipM.send(dataMsg, "appOut");
+            while (len > 0) {
+                unsigned int slen = len > 0xffff ? 0xffff : len;
+                tcpLwipM.getLwipTcpLayer()->tcp_recved(pcbM, slen);
+                len -= slen;
+            }
+        }
     }
 }
 

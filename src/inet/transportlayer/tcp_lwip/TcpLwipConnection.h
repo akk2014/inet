@@ -94,6 +94,8 @@ class INET_API TcpLwipConnection
 
     void abort();
 
+    void accept();
+
     void send(cPacket *msgP);
 
     void fillStatusInfo(TCPStatusInfo& statusInfo);
@@ -108,6 +110,10 @@ class INET_API TcpLwipConnection
 
     void initStats();
 
+    bool isSendUpEnabled() { return sendUpEnabled; }
+
+    void sendUpData();
+
   public:
     int connIdM;
     LwipTcpLayer::tcp_pcb *pcbM;
@@ -119,6 +125,7 @@ class INET_API TcpLwipConnection
     long int totalSentM;
     bool isListenerM;
     bool onCloseM;
+    bool sendUpEnabled = false;
 
     Stats *statsM;
 };
