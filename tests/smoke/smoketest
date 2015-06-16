@@ -172,6 +172,8 @@ class SmokeTestCase(SimulationTestCase):
         # process the result
         if result.exitcode == memcheckFailedErrorCode:
             assert False, "memcheck detected errors"
+        elif result.cpuTimeLimitReached:
+            pass
         elif result.exitcode != 0:
             assert False, result.errormsg
         elif result.simulatedTime == 0:
