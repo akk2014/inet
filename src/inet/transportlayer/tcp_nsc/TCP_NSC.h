@@ -135,6 +135,9 @@ class INET_API TCP_NSC : public cSimpleModule, ISendCallback, IInterruptCallback
     // send a connection established msg to application layer
     void sendEstablishedMsg(TCP_NSC_Connection& connP);
 
+    // send a connection available msg to application layer
+    void sendAvailableIndicationMsg(TCP_NSC_Connection& connP);
+
     /**
      * To be called from TCPConnection: create a new send queue.
      */
