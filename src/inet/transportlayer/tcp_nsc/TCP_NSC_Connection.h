@@ -99,7 +99,6 @@ class INET_API TCP_NSC_Connection
 
   public:
     int connIdM;
-    int appGateIndexM;
     SockPair inetSockPairM;
     SockPair nscSockPairM;
     INetStreamSocket *pNscSocketM;
