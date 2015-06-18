@@ -159,8 +159,7 @@ void TCPSocket::accept(int socketId, int oldSocketId)
     acceptCmd->setSocketId(socketId);
     acceptCmd->setOriginalSocketId(oldSocketId);
     msg->setControlInfo(acceptCmd);
-    //sendToTCP(msg);
-    check_and_cast<cSimpleModule *>(gateToTcp->getOwnerModule())->sendDelayed(msg, simtime_t(5.0), gateToTcp);//FIXME hack for test
+    sendToTCP(msg);
 }
 
 void TCPSocket::connect(L3Address remoteAddress, int remotePort)
