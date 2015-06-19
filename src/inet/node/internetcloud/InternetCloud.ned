@@ -50,7 +50,7 @@ import inet.node.inet.NetworkLayerNodeBase;
 module InternetCloud extends NetworkLayerNodeBase
 {
     parameters:
-        numLos = 0;
+        numLoInterfaces = 0;
         numTunInterfaces = 0;
         forwarding = true;
         @display("i=misc/cloud");
