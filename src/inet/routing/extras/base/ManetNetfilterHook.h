@@ -47,7 +47,7 @@ class INET_API ManetNetfilterHook : public INetfilter::IHook
     ManetNetfilterHook() {}
 
   protected:
-    void initHook(cModule* module);
+    void initHook(cModule* module, cModule* _ipLayer);
     void finishHook();
 
   protected:

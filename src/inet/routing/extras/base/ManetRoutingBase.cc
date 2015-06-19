@@ -268,7 +268,8 @@ void ManetRoutingBase::registerRoutingModule()
     }
     ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
     rt = getModuleFromPar<IIPv4RoutingTable>(par("routingTableModule"), this);
-    initHook(this);
+    INetfilter *netfilter = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+    initHook(this, check_and_cast<cModule*>(netfilter));
 
  //   WATCH_MAP(*routesVector);
     registerProtocol(Protocol::manet, gate("to_ip"));

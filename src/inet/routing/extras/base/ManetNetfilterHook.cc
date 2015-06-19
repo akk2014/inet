@@ -34,11 +34,11 @@ namespace inet {
 
 namespace inetmanet {
 
-void ManetNetfilterHook::initHook(cModule* _module)
+void ManetNetfilterHook::initHook(cModule* _module, cModule* _ipLayer)
 {
     (void)confvals_def; // NOP to avoid unused variable warning
     module = _module;
-    ipLayer = check_and_cast<IPv4 *>(getContainingNode(module)->getModuleByPath(".networkLayer.ip"));
+    ipLayer = check_and_cast<IPv4 *>(_ipLayer);
     cProperties *props = module->getProperties();
     isReactive = props && props->getAsBool("reactive");
 

@@ -36,8 +36,8 @@ simple AODVUU extends BaseRouting like IManetRouting
     parameters:
         string interfaceTableModule;
         string routingTableModule;
-        string icmpModule = default("^.networkLayer.icmp");
-        string arpModule = default("^.networkLayer.arp");
+        string icmpModule;
+        string arpModule;
         @class(AODVUU);
         @reactive;                             // IP module will send control messages when no route is present to the destination
         bool log_to_file = default(false);     // dump AODV log files (non RFC parameter)

@@ -41,8 +41,8 @@ simple DYMOFau extends BaseRouting like IManetRouting
 
         string interfaceTableModule;
         string routingTableModule;
-        string icmpModule = default("^.networkLayer.icmp");
-        string arpModule = default("^.networkLayer.arp");
+        string icmpModule;
+        string arpModule;
         int RESPONSIBLE_ADDRESSES_PREFIX = default(-1); // netmask of network this DYMO router is responsible for, -1 for self only
         //        string DYMO_INTERFACES = default("wlan"); // list of interfaces to run DYMO on, separated by a single space character
         //        string AUTOASSIGN_ADDRESS_BASE = default("10.0.0.0"); // start of address range from which to automatically assign an address to the DYMO_INTERFACES

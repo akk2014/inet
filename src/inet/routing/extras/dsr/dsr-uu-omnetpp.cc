@@ -333,7 +333,8 @@ void DSRUU::initialize(int stage)
         // ASSERT(stage >= STAGE:IP_LAYER_READY_FOR_HOOK_REGISTRATION);
         rt = inet_rt;
         ift = inet_ift;
-        initHook(this);
+        INetfilter *netfilter = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+        initHook(this, check_and_cast<cModule*>(netfilter));
 
         int  num_80211 = 0;
         InterfaceEntry *   ie;
